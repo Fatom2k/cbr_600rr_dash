@@ -15,7 +15,8 @@ Basically the ECU simply responds to requests for information.
 It doesn’t care if the response is not heard.
 
 A typical request is of the form:
-'''
+
+```
 72 07 72 11 00 14 F0 (in hexadecimal)
 72: the destination code (I think?)
 07: the number of characters in the message including the checksum
@@ -33,7 +34,8 @@ The ECU will respond with a similar format:
 00: the starting register
 XX: the data
 YY: the checksum
-'''
+```
+
 The checksum is calculated differently to the ISO OBDII protocol. It goes like this:
 * Sum all the values of the characters together, and take that value from 100 (hex).
 * If the sum is greater than 100 hex, just use the last two characters (in hex).
