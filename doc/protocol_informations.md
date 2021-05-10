@@ -15,7 +15,6 @@ Basically the ECU simply responds to requests for information.
 It doesn’t care if the response is not heard.
 
 A typical request is of the form:
-
 ```
 72 07 72 11 00 14 F0 (in hexadecimal)
 72: the destination code (I think?)
@@ -25,7 +24,10 @@ A typical request is of the form:
 00: the starting register within data table 11
 14: the finishing register within data table 11
 F0: the checksum
+```
+
 The ECU will respond with a similar format:
+```
 02 1A 72 11 00 XX XX XX …XX YY
 02: the destination code (I think?)
 1A: the number of characters in the message (in this case 26 decimal)
