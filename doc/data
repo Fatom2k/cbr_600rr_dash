@@ -1,0 +1,10 @@
+This ECU initialization is: 
+k-line low for 70msg. and high for 130msg. 
+
+After that: 
+1st message: FE 04 FF FF (maybe bus init) => ECU dont response 
+2nd message: 72 05 00 F0 99 => ECU 02 04 00 FA (I dont know the meaning) 
+Then I send the frames you suggest: 
+PC:72 07 72 D1 00 05 3F => ECU: 02 0B 72 D1 00 03 00 00 00 00 AD 
+PC:72 07 72 D0 00 05 40 => ECU: 02 0B 72 D0 00 00 00 00 00 00 B1 
+PC:72 07 72 D0 00 06 3F => ECU: 02 0B 72 D0 00 00 00 00 00 00 00 B0
