@@ -8,3 +8,17 @@ Then I send the frames you suggest:
 PC:72 07 72 D1 00 05 3F => ECU: 02 0B 72 D1 00 03 00 00 00 00 AD 
 PC:72 07 72 D0 00 05 40 => ECU: 02 0B 72 D0 00 00 00 00 00 00 B1 
 PC:72 07 72 D0 00 06 3F => ECU: 02 0B 72 D0 00 00 00 00 00 00 00 B0
+
+
+Pour le pc37 (cbr 600 rr):
+- init du bus kline low pendant 70ms puis high pendant 130ms
+
+ensuite
+- 1er message:
+  FE 04 FF FF
+- 2nd message:
+  72 05 00 F0 99  Réponse: 02 04 00 FA
+  
+début des vrais échanges:
+MC:72 05 71 10 F8   // pour requêter la table 10
+MC:72 05 71 60 B8   // pour requêter la table 60
