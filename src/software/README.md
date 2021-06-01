@@ -3,9 +3,10 @@
 Software for the Teensy
 
 Pinouts are as:
-* GPS Uart
-* Nextion Uart
-* K-Line Uart
+* GPS Serial1
+* Bluetooth Serial2
+* Nextion SoftSerial (,)
+* K-Line Serial3 (7,8)
 * Affectation des boutons
  * Btn 1
  * Btn 2
