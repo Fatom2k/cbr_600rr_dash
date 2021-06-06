@@ -4,21 +4,6 @@
   SoftwareSerial > pins 11/10 for bt or other
   Seria0l is used for L9637D @ 10400bads 8N1
 
-  data extract:
-  fast init
-  FE 04 FF FF
-  -> 72 5 00
-  <-F0 99 02 04 00 FA
-
-  -> 72 05 71 70 A8
-  <-02 08 71 70 31 80 01 63
-
-  -> 72 05 71 60 B8
-  <-02 16 71 60 30 FD E1 9A 28 7D AF 36 93 64 FF FF 82 00 05 DD CE BE
-
-  -> 72 05 71 20 F8
-  <-02 08 71 20 C4 80 00 21
-
 **/
 
 #include <SoftwareSerial.h>
@@ -103,20 +88,34 @@ void loop() {
 // ##############################################
 // ECU messages
 // ##############################################
+
+/**
+Send data to ECU through K-Line
+**/
 void ECU_sendMsg(byte message){
   for (uint8_t i = 0; i < sizeof(initMsg1)){
-    
+    KL.write(message[i]);
+    delay(ISORequestByteDelay);    
   }
+  delay(20);
 }
 
+/**
+Initiate ECU  Fastinit
+**/
 void ECU_FastInit() {
 
   byte initMsg1 = {0xFE, 0x04, 0xFF, 0xFF};
   byte initMsg2 = {0x72, 0x05, 0x00, 0xF0, 0x99};
+  byte respQuery;
   byte respMsg;
   
+  Serial.println("> FastInit");
+
   KL.end();
   // This is the ISO 14230-2 "Fast Init" sequence.
+
+  // FastInit line
   digitalWrite(K_OUT, LOW);
   delay(70);
   digitalWrite(K_OUT, HIGH);
@@ -124,36 +123,28 @@ void ECU_FastInit() {
   // Should be 10417
   KL.begin(10400);
 
-  for (uint8_t i = 0; i < sizeof(initMsg1); i++) {
-    KL.write(initMsg1[i]);
-    delay(ISORequestByteDelay);
-  }
+  // FastInit 1st message
+  ECU_sendMsg(initMsg1);
 
-  delay(20);
-
-  for (uint8_t i = 0; i < sizeof(); i++) {
-    KL.write(buf2[i]);
-    delay(ISORequestByteDelay);
-  }
-
-  delay(20);
-
-  // extracting sent message
+  //FastInit 2nd message. Should have response if ECU Connected
+  ECU_sendMsg(initMsg2);
+  // extracting sent message because it echoes itself
   if (KL.available()){
-    KL.readBytes();
-    
+    KL.readBytes(respQuery, sizeof(initMsg2));  
   }
-  // should respon: 02 04 00 FA
-  while (KL.available()) {
-    BT.print(KL.read(), HEX);
-    BT.print(" ");
+
+  // Extracting Response. Should respond: 02 04 00 FA
+  if (KL.available()){
+      KL.readBytes(respMsg, 4); //we have a fixed length answer because we are waiting for a specified msg
+      bikeData.klConnect = true;
+      Serial.println("< II: ECU connectec");
+  } else {
+    bikeData.klConnect = false;
+    Serial.println("< EE: ECU not connected");
   }
-  BT.println("");
 
-  delay(20);
-
-  BT.println("--------- Fastinit END");
-
+  //TODO: test message length and checksum
+  
 }
 
 void ECU_requestData() {
