@@ -6,36 +6,41 @@
 
 **/
 
-#include <SoftwareSerial.h>
+#include "Nextion.h"
 
-
-uint32_t lastBTrequest;
-bool bluetoothConnected = false;
-
-//-----------------------------//
-// ##       OBD K-Line      ## //
-#define K_OUT 8 // K Output Line - TX (1) on Arduino
-#define K_IN 7  // K Input  Line - RX (0) on Arduino
+/**
+    #######################
+    Hardware definitions
+    #######################
+**/
 
 #define GPS Serial1
+
 #define BT Serial2
 
+#define K_OUT 8 // K Output Line - TX (1) on Arduino
+#define K_IN 7  // K Input  Line - RX (0) on Arduino
 #define KL Serial3
-#define NextionRxPin 2
-#define NextionTxPin 3
-SoftwareSerial Nextion(NextionRxPin, NextionTxPin);
 
-// Timings
-#define MAXSENDTIME 2000 // 2 second timeout on KDS comms.
+#define NextionRxPin 5
+#define NextionTxPin 6
+Nextion nextion(NextionRxPin, NextionTxPin);
+
+
+//Status LED (OnBoard)
+#define BOARD_LED 13
+
+
+/**
+    #######################
+    Const and Vars
+    #######################
+**/
+
+// K-Line delay
 const uint8_t ISORequestByteDelay = 10;
-const uint8_t ISORequestDelay = 1000; // Time between requests.
-// Source and destination adresses, ECU (0x11) & Arduino (0xF1)
-const uint8_t ECUaddr = 0x11;
-const uint8_t MyAddr = 0xF1;
 
-
-//-----------------------------//
-
+// Bike data structure
 struct bikeData_struct {
   int rpm = 0;
   int bspeed = 0;
@@ -48,20 +53,23 @@ struct bikeData_struct {
 
 bikeData_struct bikeData;
 
-//Status LED (OnBoard)
-#define BOARD_LED 13
-
 // GPS data to send fo params
 //set 10hz
 byte gps10hz[] = {0xB5, 0x62, 0x06, 0x08, 0x06, 0x00, 0x64, 0x00, 0x01, 0x00, 0x01, 0x00, 0x7A, 0x12};
 
+
+/**
+    #######################
+    Setup is here
+    #######################
+**/
 void setup() {
   //Other serial init------------
   Serial.begin(115200);
-  Serial.println("Hello LapRacer !");
   BT.begin(115200);
-  BT.println("Hello bt");
+
   // Nextion init ---------------
+  nextion.init();
 
   // KDS Init--------------------
   pinMode(K_OUT, OUTPUT);
@@ -72,43 +80,49 @@ void setup() {
   digitalWrite(BOARD_LED, LOW);
 
 
-  delay(3000);
-
-
-
   //questions for other things----
 
-}
+  delay(5000);
+  nextion.swapPage(0);
 
-void loop() {
-  ECU_requestData();
-  delay(50);
 }
-
-// ##############################################
-// ECU messages
-// ##############################################
 
 /**
-Send data to ECU through K-Line
+    #######################
+    Program main loop
+    #######################
 **/
-void ECU_sendMsg(byte message){
-  for (uint8_t i = 0; i < sizeof(initMsg1)){
+void loop() {
+  //ECU_requestData();
+  //nextion.nextionSwapPage(0);
+  delay(3000);
+
+}
+
+/**
+    #######################
+    Functions for Honda K-Line ECU
+    #######################
+**/
+
+
+// Send data to ECU through K-Line
+void ECU_sendMsg(byte *message){
+  for (uint8_t i = 0; i < sizeof(message); i++){
     KL.write(message[i]);
     delay(ISORequestByteDelay);    
   }
   delay(20);
 }
 
-/**
-Initiate ECU  Fastinit
-**/
+
+// Initiate ECU  Fastinit
 void ECU_FastInit() {
 
-  byte initMsg1 = {0xFE, 0x04, 0xFF, 0xFF};
-  byte initMsg2 = {0x72, 0x05, 0x00, 0xF0, 0x99};
-  byte respQuery;
-  byte respMsg;
+  byte initMsg1[] = {0xFE, 0x04, 0xFF, 0xFF};
+  byte initMsg2[] = {0x72, 0x05, 0x00, 0xF0, 0x99};
+  byte *respQuery;
+  byte *respMsg;
   
   Serial.println("> FastInit");
 
@@ -137,7 +151,7 @@ void ECU_FastInit() {
   if (KL.available()){
       KL.readBytes(respMsg, 4); //we have a fixed length answer because we are waiting for a specified msg
       bikeData.klConnect = true;
-      Serial.println("< II: ECU connectec");
+      Serial.println("< II: ECU connected");
   } else {
     bikeData.klConnect = false;
     Serial.println("< EE: ECU not connected");
@@ -147,16 +161,10 @@ void ECU_FastInit() {
   
 }
 
+// request some data from bike
 void ECU_requestData() {
 
   byte reqMsg[] = {0x72, 0x05, 0x71, 0x10, 0x08};
-  for (uint8_t i = 0; i < sizeof(reqMsg) ; i++) {
-    KL.write(reqMsg[i]);
-    delay(ISORequestByteDelay);
-  }
-
-  delay(20);
-
   byte respQuery[sizeof(reqMsg)];
 
   if (KL.available()) {

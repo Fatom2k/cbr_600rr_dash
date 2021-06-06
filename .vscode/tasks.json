@@ -1,0 +1,17 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "default build task",
+            "type": "shell",
+            "command": "C:\\Users\\fatom\\Downloads\\arduino-1.8.9\\arduino-builder.exe -compile -hardware C:\\Users\\fatom\\Downloads\\arduino-1.8.9\\hardware -tools C:\\Users\\fatom\\Downloads\\arduino-1.8.9\\tools -tools C:\\Users\\fatom\\Downloads\\arduino-1.8.9\\tools-builder -libraries C:\\Users\\fatom\\Downloads\\arduino-1.8.9\\lib -fqbn teensy:avr:teensy31:usb=serial,speed=96,opt=o2std,keys=en-us -warnings none C:\\Users\\fatom\\Documents\\projects\\cbr_600rr_dash\\src\\software\\LapRacer01\\LapRacer01.ino",
+            "problemMatcher": ["$lessCompile"],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}
