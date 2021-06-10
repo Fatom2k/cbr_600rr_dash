@@ -76,7 +76,7 @@ void loop() {
   //ECU_requestData();
   //nextion.nextionSwapPage(0);
   ECU_updateDatas();
-  delay(100);
+  delay(20);
 
 }
 
@@ -85,10 +85,3 @@ void loop() {
     Functions for Honda K-Line ECU
     #######################
 **/
-
-
-
-
-
-
-
