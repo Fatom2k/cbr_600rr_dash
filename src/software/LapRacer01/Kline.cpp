@@ -3,18 +3,37 @@
 #include "KLine.h"
 
 
-// K-Line delay
-const uint8_t ISORequestByteDelay = 10;
+// requestData struc answer
+struct requestDataAnswerStruct {
+  bool result = false;
+  byte answer[32] = {0, 0, 0, 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+};
+
+// datas stored from bike 
+struct bikeDataStruct {
+    int rpm = 0;
+    int speed = 0;
+    int gear = 0;
+    int coolant_temp = 0;
+};
 
 // Ecu connected
 bool ECU_connected = false;
+
+// K-Line delay
+const uint8_t ISORequestByteDelay = 10;
 
 // K-Line Honda messages
 byte initMsg1[] = {0xFE, 0x04, 0xFF, 0xFF};
 byte initMsg2[] = {0x72, 0x05, 0x00, 0xF0, 0x99};
 byte respInitMsg2[] = {0x02, 0x04, 0x00, 0xFA};
-byte reqTable10[] = {0x72, 0x05, 0x71, 0x10, 0x08};
+byte reqTable10[] = {0x72, 0x05, 0x71, 0x10, 0x08}; // tables principale
 
+// usefull instances of structs
+
+
+bikeDataStruct bikeData;
+bikeDataStruct previousBikeData;
 
 void ECU_init() {
   pinMode(K_OUT, OUTPUT);
@@ -23,6 +42,7 @@ void ECU_init() {
 
 // mandatory
 
+// just a debug printing of ECU messages into serial ----------------------------------------------
 void ECU_printMsg(byte *msgToPrint, int msgSize) {
 
   for (int i = 0; i < msgSize; i++) {
@@ -32,7 +52,7 @@ void ECU_printMsg(byte *msgToPrint, int msgSize) {
   Serial.println("");
 }
 
-// Send data to ECU through K-Line
+// Send data to ECU through K-Line ----------------------------------------------------------------
 void ECU_sendMsg(byte *message, int msgSize) {
   Serial.print("--> Sending message: ");
   ECU_printMsg(message, message[1]);
@@ -43,6 +63,7 @@ void ECU_sendMsg(byte *message, int msgSize) {
   delay(20);
 }
 
+// send fastInit messages because they are specific------------- ----------------------------------
 bool ECU_sendFastInitMsg(byte *reqMsg) {
   byte respMsg[5];
   for (uint8_t j = 0; j < 5; j++) {
@@ -85,8 +106,11 @@ bool ECU_sendFastInitMsg(byte *reqMsg) {
 
 }
 
-// Ask for data and verifying answer
-byte ECU_requestData(byte *reqMsg) {
+// Ask for data and verifying answer --------------------------------------------------------------
+// TODO: format return with the struct
+// TODO: test checkSum
+requestDataAnswerStruct ECU_requestData(byte *reqMsg) {
+  requestDataAnswerStruct requestDataAnswer;
   byte respMsg[32];
   for (uint8_t j = 0; j < 32; j++) {
     respMsg[j] = 0x00;
@@ -96,8 +120,8 @@ byte ECU_requestData(byte *reqMsg) {
 
   if (!ECU_connected) {
     ECU_fastInit();
-    return 1;
 
+    return requestDataAnswer; // if ecu was not connected, fast init apended so we must return or it freezes
   }
 
   if (ECU_connected) {
@@ -110,35 +134,36 @@ byte ECU_requestData(byte *reqMsg) {
       i++;
     }
 
-    Serial.print("<-- Answer: ");
-    ECU_printMsg(respMsg, sizeof(respMsg));
+    //Serial.print("<-- Answer: ");
+    //ECU_printMsg(respMsg, sizeof(respMsg));
 
     // parsing answer
     // exemple: -> 72 05 71 10 08 <- 02 16 71 10 00 00 1C 00 97 41 94 42 93 64 FF FF 82 00 00 00 80 A6
-    // TODO: extraction de la reqMsg  qui est l'echo
-    // TODO: comparer les octets 3 et 4 de la question et la réponse qui doivent être égaux
     // Dans notre cas les octets @2 et @3 et + @1
 
     if ( ( respMsg[0 + reqMsgSize] ==  0x02 ) and (respMsg[2] == respMsg[2 + reqMsgSize]) and (respMsg[3] == respMsg[3 + reqMsgSize]) ) {
       Serial.println("ECU respond something");
-      //return 1;
+      requestDataAnswer.result = true;
+      for (int i = 0; i<32; i++){
+        requestDataAnswer.answer[i] = respMsg[i + reqMsgSize];
+      };
+      return requestDataAnswer;
+      
     } else {
       Serial.println("ECU doesn't respond");
       ECU_connected = false;
+      return requestDataAnswer;
     }
   }
-
-  //return 0;
-
+  return requestDataAnswer;
 }
 
-// Initiate ECU  Fastinit
+// Initiate ECU  Fastinit -------------------------------------------------------------------------
 void ECU_fastInit() {
 
   Serial.println("--> Starting Fastinit");
   byte *respQuery;
   byte *respMsg;
-
 
   KL.end();
   // This is the ISO 14230-2 "Fast Init" sequence.
@@ -153,15 +178,51 @@ void ECU_fastInit() {
 
   // FastInit 1st message
   ECU_sendFastInitMsg(initMsg1);
-  delay(200);
+  delay(200); //mandatory delay 
   //FastInit 2nd message. Should have response if ECU Connected
   ECU_connected = ECU_sendFastInitMsg(initMsg2);
-  delay(200);
-  
-
-  //TODO: test message length and checksum
+  delay(100); // allow delay after fastInit procedure
 }
 
+// Update bike datas ------------------------------------------------------------------------------
 void ECU_updateDatas() {
-  ECU_requestData(reqTable10);
+  requestDataAnswerStruct requestDataAnswer;
+
+  //requesting main data table
+  requestDataAnswer = ECU_requestData(reqTable10);
+  if (requestDataAnswer.result) {
+    // if there s an answer, parser result
+    //ECU_printMsg(requestDataAnswer.answer, 32);
+    // example 02 16 71 10 00 00 1C 00 97 41 94 42 93 64 FF FF 82 00 00 00 80 A6
+
+    // rpm registers @4 and @5
+    bikeData.rpm = 0;
+    bikeData.rpm = requestDataAnswer.answer[4]; //msb. dont forget to add the query offset
+    bikeData.rpm = (bikeData.rpm << 8) | requestDataAnswer.answer[5]; //lsb dont forget to add the query offset
+    Serial.print("=======RPM: ");
+    Serial.println(bikeData.rpm);
+
+    // speed register @17
+    bikeData.speed = requestDataAnswer.answer[17];
+    Serial.print("=======Speed: ");
+    Serial.println(bikeData.speed);
+
+    // engaged gear (compute from rpm and speed)
+    bikeData.gear = 0;
+
+    // coolant temperature @9
+    bikeData.coolant_temp = requestDataAnswer.answer[9] - 40;
+    Serial.print("=======ECT: ");
+    Serial.println(bikeData.coolant_temp);
+
+  }
+  
+}
+
+void ECU_getDatas(int datas[4]) {
+  ECU_updateDatas();
+  datas[0]=bikeData.rpm;
+  datas[1]=bikeData.speed;
+  datas[2]=bikeData.gear;
+  datas[3]=bikeData.coolant_temp;
 }

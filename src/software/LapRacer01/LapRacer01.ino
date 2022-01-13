@@ -29,11 +29,10 @@
 #define NextionTxPin 6
 Nextion nextion(NextionRxPin, NextionTxPin);
 
+#define neutral 23
 
 //Status LED (OnBoard)
 #define BOARD_LED 13
-
-
 
 // GPS data to send fo params
 //set 10hz
@@ -61,8 +60,7 @@ void setup() {
   // status led aus
   digitalWrite(BOARD_LED, LOW);
 
-
-  //questions for other things----
+  pinMode(neutral, INPUT);
 
 
 }
@@ -73,15 +71,21 @@ void setup() {
     #######################
 **/
 void loop() {
-  //ECU_requestData();
-  //nextion.nextionSwapPage(0);
-  ECU_updateDatas();
+  //temporary ECU datas {rpm, speed, gear, ECT}
+  int ECUDatas[4] = {0, 0, 0, 0};
+  
+  ECU_getDatas(ECUDatas);
+  
+  nextion.setRpm(ECUDatas[0]);
+  nextion.setSpeed(ECUDatas[1]);
+
+  if(digitalRead(neutral)){
+    nextion.setGear(char(ECUDatas[2]));
+  } else {
+    nextion.setGear('N');
+  }
+  
+  nextion.setECT(ECUDatas[3]);
   delay(20);
 
 }
-
-/**
-    #######################
-    Functions for Honda K-Line ECU
-    #######################
-**/

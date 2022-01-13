@@ -8,7 +8,6 @@
 
 class Nextion
 {
-
   public:
     Nextion(int rxPin, int txPin);
     void init();
@@ -16,7 +15,8 @@ class Nextion
     void swapPage(int targetPage);
     void setRpm(int rpm);
     void setSpeed(int speed);
-    void setTemp(int temp_ldr);
+    void setGear(char gear);
+    void setECT(int temp_ldr);
 
 
   protected:
@@ -34,4 +34,3 @@ class Nextion
 };
 
 #endif
-

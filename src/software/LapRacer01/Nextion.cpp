@@ -28,6 +28,14 @@ void Nextion::setSpeed(int speed){
   _nextionWrite("vitesse.txt", String(speed));
 }
 
+void Nextion::setGear(char gear){
+  _nextionWrite("rengage.txt", gear);
+}
+
+void Nextion::setECT(int temp){
+  _nextionWrite("temp_ldr.txt", String(temp));
+}
+
 // mandatory
 void Nextion::_nextionWrite(String target, String value) {
   _nextionSerial.print(target);
@@ -56,5 +64,3 @@ void Nextion::swapPage(int targetPage) {
   _nextionSerial.write(0xFF);
   _nextionSerial.write(0xFF);
 }
-
-

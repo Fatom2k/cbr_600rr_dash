@@ -10,6 +10,7 @@
 void ECU_init();
 void ECU_fastInit();
 void ECU_updateDatas();
+void ECU_getDatas(int datas[4]);
 
 
 #endif

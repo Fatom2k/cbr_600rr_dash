@@ -1,0 +1,27 @@
+- Pinout compteur CBR 600 RR 2003/2004 -
+
+Rouge - Vert :		+12v
+Noir - Marron:		+12v après contact
+Vert         :		GND - Masse
+
+Marron - blanc: 	Illum (+12v)
+Blanc        :		Plein phares
+
+Rose - Vert  :		Vitesse
+Jaune - Vert :		RPM
+----------------------------------------------------------------------
+Vert - Noir  :		Commun capteurs (-)	
+
+Bleu - Rouge :		pression d'huile (-) mis à la masse = allumé
+Blanc - Bleu :		Engine light (-) mis à la masse = allumé
+Vert clair - Rouge: Neutre (-) -> mis à la masse = allumé
+Vert - Bleu  :		temperature (-) -> 0 Ohms = température à fond
+Marron - Noir:		réservoir (-) -> 0 Ohms = plein
+----------------------------------------------------------------------
+
+Blanc - Vert :		Win-in ? (utilisé pour les clignotants ?)
+Gris         :		Sortie 12v clignotants
+Orange       : 		clignotant Gauche
+Bleu clair   : 		clignotant Droit
+
+
